@@ -260,4 +260,7 @@ public class SMSActivity extends AppCompatActivity {
 ```
 
 > 결과화면 <br/>
-![image](https://user-images.githubusercontent.com/62331803/90599966-bcad4100-e230-11ea-9820-e32d12032a14.png)
+
+![image](https://user-images.githubusercontent.com/62331803/90600301-4826d200-e231-11ea-885a-8458036860df.png)
+
+<br/>
