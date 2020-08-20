@@ -1,4 +1,46 @@
-## 0819 연습문제 | 메세지 수신함 
+## 0819 연습문제 | 메세지 수신함 (디버깅 완료)
+
+> Sms.java
+```java
+package com.example.receivertest;
+
+public class Sms {
+    private String phone;
+    private String msg;
+
+    public Sms() {
+    }
+
+    public Sms(String phone, String msg) {
+        this.phone = phone;
+        this.msg = msg;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + phone + ")         "+
+                 msg ;
+    }
+}
+
+```
+
 
 > activity_main.xml <br/>
 ![image](https://user-images.githubusercontent.com/62331803/90599562-0b0e1000-e230-11ea-975f-2bc141936b60.png)
@@ -35,10 +77,12 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    private ArrayList<String> msgs = new ArrayList<>();;
-    private ArrayAdapter<String> aa;
+    private ArrayList<Sms> msgs = new ArrayList<>();;
+    private ArrayAdapter<Sms> aa;
     private ListView listView;
     private Intent intent;
+    private String msg;
+    private String sender;
 
     //각 리시버를 깨울 상수값
     private final static String SEND_ACTION = "SENT";
@@ -57,8 +101,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 // Toast로 sender와 msg 띄우기 *** 수정
-                String msg = msgs.get(i);
-                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                Sms msg = msgs.get(i);
+                Toast.makeText(MainActivity.this, msg.toString(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -68,8 +112,8 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 // an Intent broadcast.
                 Bundle bundle = intent.getExtras();
-                String msg;
-                String sender;
+//                String msg;
+//                String sender;
 
                 int i;
                 if (bundle != null) {
@@ -89,6 +133,8 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialogInterface, int i) {
+                                        msgs.add(new Sms(sender,msg));
+                                        aa.notifyDataSetChanged();
                                         dialogInterface.cancel();//다이얼로그 창 닫음
                                         //finish(): 액티비티 종료
                                     }
@@ -96,9 +142,6 @@ public class MainActivity extends AppCompatActivity {
                                 .setTitle("You've got Message!");
                         AlertDialog alertDialog = builder.create();
                         alertDialog.show();
-
-                        msgs.add("("+sender +")        " + msg);
-                        aa.notifyDataSetChanged();
                     }
                 }
             }
@@ -169,11 +212,24 @@ public class MainActivity extends AppCompatActivity {
         switch(item.getItemId()){
             case 1:
                 //메세지 입력창으로 이동
-                intent = new Intent(MainActivity.this, SMSActivity.class);
-                startActivity(intent);
+                intent = new Intent(this, SMSActivity.class);
+                startActivityForResult(intent,1); //startActivity() X
                 break;
         }
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==RESULT_OK){
+            switch(requestCode){
+                case 1:
+                    Toast.makeText(this,"전송완료",Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+
     }
 }
 ```
@@ -217,8 +273,6 @@ public class SMSActivity extends AppCompatActivity {
     private final static String SEND_ACTION = "SENT";
     private final static String DELIVER_ACTION = "DELIVERED";
 
-    private Intent intent;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -250,17 +304,29 @@ public class SMSActivity extends AppCompatActivity {
 
         //sms 전송
         sms.sendTextMessage(phone, null, msg, sendStat, deliveredStat);
-        Toast.makeText(SMSActivity.this,"전송 완료",Toast.LENGTH_SHORT).show();
-
-        //main으로 이동
-        intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+        setResult(RESULT_OK);//보낼 데이터가 없다면 intent 보내지 않음.
+        finish();//현재 activity 종료.
     }
 }
 ```
 
 > 결과화면 <br/>
 
-![image](https://user-images.githubusercontent.com/62331803/90600301-4826d200-e231-11ea-885a-8458036860df.png)
+![image](https://user-images.githubusercontent.com/62331803/90704320-237f3880-e2cb-11ea-9c38-abfb2c7f9332.png)
 
 <br/>
+
+> 피드백
+#### 1 | New Message로 이동시 startActivity()로 intent 활성화
+- startActivityForResult()로 활성화해야함.
+- startActivity()는 이동할 때마다 매번 새로운 액티비티를 만드는 것이기 때문에
+- 데이터가 매번 갱신된다.
+- msgs 배열 안의 요소를 초기화 시키지 않기 위해서는 forResult 사용
+#### 2 | startActivityForResult로 이동한 activity에서 데이터를 보낼 필요 없는 경우
+- getIntent 필요 없음
+- setResult에 intent 넣을 필요 없음
+- 예시
+```java
+        setResult(RESULT_OK);//보낼 데이터가 없다면 intent 보내지 않음.
+        finish();//현재 activity 종료.
+```
