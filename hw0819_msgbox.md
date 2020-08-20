@@ -330,3 +330,4 @@ public class SMSActivity extends AppCompatActivity {
         setResult(RESULT_OK);//보낼 데이터가 없다면 intent 보내지 않음.
         finish();//현재 activity 종료.
 ```
+### 3 | Sms VO 클래스 따로 생성하기
